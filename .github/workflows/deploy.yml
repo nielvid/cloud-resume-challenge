@@ -1,0 +1,43 @@
+
+name: Deploy Cloud Function
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          version: 'latest'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+     
+      # Authenticate via SAKE
+      - id: authenticate
+        name: 'Authenticate via SAKE'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
+        
+      - id: deploy
+        name: Deploy Cloud Function
+        run: |
+          gcloud functions deploy cloud-resume \
+            --region europe-west2 \
+            --runtime nodejs20 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --entry-point resume \
+            --source .
+
+
